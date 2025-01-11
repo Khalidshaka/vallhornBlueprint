@@ -37,7 +37,6 @@ blueprint:
         entity:
           domain: sensor
           device_class: illuminance
-          multiple: false
       default: ""
     luminance_required:
       name: Luminance Threshold
