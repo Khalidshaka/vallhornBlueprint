@@ -38,6 +38,7 @@ blueprint:
           domain: sensor
           device_class: illuminance
           multiple: false
+      default: ""
     luminance_required:
       name: Luminance Threshold
       description: "Automation triggers if luminance is below this level."
@@ -93,6 +94,7 @@ blueprint:
       description: "Run only if this entity is in the desired state."
       selector:
         entity: {}
+      default: ""
     automation_blocker_boolean:
       name: Automation Blocker State
       default: false
@@ -103,6 +105,7 @@ blueprint:
       description: "Block the 'off' action if this entity is in the desired state."
       selector:
         entity: {}
+      default: ""
     motion_off_blocker_boolean:
       name: Motion Off Blocker State
       default: false
@@ -144,10 +147,10 @@ trigger:
 condition:
   - condition: template
     value_template: >
-      {% if not is_defined(automation_blocker) %}
-        true
-      {% else %}
+      {% if is_defined(automation_blocker) and automation_blocker != "" %}
         {{ automation_blocker_boolean == (states[automation_blocker].state == 'on') }}
+      {% else %}
+        true
       {% endif %}
   - condition: template
     value_template: >
@@ -164,9 +167,13 @@ action:
       - conditions:
           - condition: template
             value_template: "{{ trigger.to_state.state == 'on' }}"
-          - condition: numeric_state
-            entity_id: !input luminance_sensor
-            below: !input luminance_required
+          - condition: template
+            value_template: >
+              {% if is_defined(luminance_sensor) and luminance_sensor != "" %}
+                {{ states[luminance_sensor].state | float(0) < luminance_required }}
+              {% else %}
+                true
+              {% endif %}
         sequence:
           - condition: time
             after: !input time_default_start
@@ -178,10 +185,10 @@ action:
             value_template: "{{ trigger.to_state.state == 'off' }}"
           - condition: template
             value_template: >
-              {% if not is_defined(motion_off_blocker) %}
-                true
-              {% else %}
+              {% if is_defined(motion_off_blocker) and motion_off_blocker != "" %}
                 {{ motion_off_blocker_boolean == (states[motion_off_blocker].state == 'off') }}
+              {% else %}
+                true
               {% endif %}
         sequence:
           - choose:
